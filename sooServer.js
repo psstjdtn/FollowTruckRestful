@@ -12,8 +12,8 @@ var mysql = require('mysql');
 var connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
-  password : 'test1234',
-  port     : '3307',
+  //password : 'test1234',
+  //port     : '3307',
   database : 'restful'
 }); 
 connection.connect();
@@ -35,34 +35,82 @@ app.get('/users/', function(req,res){
 		});
 });
 
-/*	1	로그인	GET	/users/	userid	SELECT	user	회원정보	*/
-app.get('/users/:userid', function(req,res){ 
-	connection.query('select * from users where userid=?',
-		[req.params.userid], function(err, results, fields) {
+/*	1	로그인	POST/users/	회원정보	*/
+var jwt = require('json-web-token');
+app.post('/users/login',function(req,res){
+	var password = req.body.password;
+	var hash = crypto.createHash('sha256').
+		update(password).digest('base64');
+	connection.query(
+		'select id from users where userid=? and password=?',
+		[ req.body.userid, hash ], function(err, results, fields){
 			if (err) {
-				res.send(JSON.stringify(err));
+					res.send(JSON.stringify(err));
 			} else {
-				if (results.length > 0) {
-					res.send(JSON.stringify(results[0]));
-				} else {
-					res.send(JSON.stringify({}));
+				if (results.length > 0) { //조건만족 -> 로그인성공
+					var cur_date = new Date()
+					var settingAddHeaders = {
+						payload: {
+							"iss":"shinhan",
+							"aud":"mobile",
+							"iat":cur_date.getTime(),
+							"typ":"/online/transactionstatus/v2",
+							"request":{
+								"myTransactionId":req.body.user_id,
+								"merchantTransactionId":hash,
+								"status":"SUCCESS"
+							}
+						},
+						header:{
+							kid:'abcdefghijklmnopqrstuvwxyz1234567890'
+						}
+					};
+					var secret = "SHINHANMOBILETOPSECRET!!!!!!!!";
+					jwt.encode(secret, settingAddHeaders,
+						function(err, token) {
+							if (err) {
+								res.send(JSON.stringify(err));
+							} else {
+								var tokens = token.split(".");
+								connection.query(
+									'insert into user_login('+
+									'token,user_real_id) values(?,?)',
+									[tokens[2], results[0].id],
+									function(err,result){
+										if(err) {
+											res.send(JSON.stringify(err));
+										} else {
+											res.send(JSON.stringify({
+												result:true,
+												token:tokens[2],
+												db_result:result
+											}));
+										}
+									});
+							}
+						});
+				} else { //조건불만족 -> 로그인 실패
+					res.send(JSON.stringify({result:false}));
 				}
-				
 			}
 		});
-
 });
 
 /*	2	회원가입	POST	/users	name, password, hpno, snsid, user_code	INSERT	user	회원정보	*/
+var crypto = require('crypto');
 app.post('/users', function(req,res){
+	var password = req.body.password;
+	var hash = crypto.createHash('sha256').
+		update(password).digest('base64');
 	connection.query(
 		'insert into users(userid,name,password,hpno,snsid,user_code) values(?,?,?,?,?,?)',
-		[ req.body.userid, req.body.name, req.body.password, req.body.hpno, req.body.snsid, req.body.user_code ], 
-		function(err, result) {
+		[ req.body.userid, req.body.name, hash, req.body.hpno, req.body.snsid, req.body.user_code ], 
+		function(err, results) {
 			if (err) {
-				res.send(JSON.stringify(err));
+				res.send(JSON.stringify({result:false}));
+				//res.send(JSON.stringify(err));
 			} else {
-				res.send(JSON.stringify(result));
+				res.send(JSON.stringify({result:true}));
 			}
 		})
 });

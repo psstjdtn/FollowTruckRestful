@@ -60,6 +60,6 @@ businessid text NOT NULL,
 userid text not null, 
 order_text text,
 total_price text,
-order_time text,
+order_time DATETIME default current_timestamp
 order_state integer NOT NULL
 );

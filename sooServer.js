@@ -35,6 +35,21 @@ app.get('/users/', function(req,res){
 		});
 });
 
+app.get('/users/:userid', function(req,res){ 
+	connection.query('select * from users where userid=?', 
+		[req.params.userid], function(err,results,fields) {
+			if (err) {
+				res.send(JSON.stringify(err));
+			} else {
+				if (results.length > 0) {
+					res.send(JSON.stringify(results[0]));
+				} else {
+					res.send(JSON.stringify({}));
+				}
+			}
+		});
+});
+
 /*	1	로그인	POST/users/	회원정보	*/
 var jwt = require('json-web-token');
 app.post('/users/login',function(req,res){
@@ -287,19 +302,49 @@ app.get('/menu/:id', function(req,res){
 });
 
 /*	10	메뉴등록	POST	/menu	businessid, imgurl, name, price	INSERT	BIZ	메뉴정보	*/
+///////////////////////////////////
+// img파일 다운로드,업로드
+///////////////////////////////////
+var multer = require('multer');
+var Storage = multer.diskStorage({
+	destination: function(req, file, callback) {
+		callback(null, "./public/upload_image/");
+	},
+	filename: function(req, file, callback) {
+		file.uploadedFile = file.fieldname + "_" +
+			Date.now() + "_" + file.originalname
+		console.log('file.uploadedFile:' + file.uploadedFile);
+		callback(null, file.uploadedFile);
+	}
+});
+
+var upload = multer({
+	storage : Storage
+}).single("image");
+
+app.post('/menu/images', function(req,res){
+	upload(req, res, function(err){
+		if (err) {
+			res.send(JSON.stringify(err));
+		} else {
+			res.send(JSON.stringify({url:req.file.uploadedFile,
+				description:req.body.description}));
+		}
+	});
+});
+
 app.post('/menu', function(req,res){
 	connection.query(
 		'insert into menu(businessid,name,price,imgurl) values(?,?,?,?)',
 		[ req.body.businessid, req.body.name, req.body.price, req.body.imgurl], 
-		function(err, result) {
+		function(err, results) {
 			if (err) {
 				res.send(JSON.stringify(err));
 			} else {
-				res.send(JSON.stringify(result));
+				res.send(JSON.stringify({result:true}));
 			}
 		})
 });
-
 
 /*	11	메뉴변경	PUT	/menu	rowid, imgurl, name, price	UPDATE	BIZ	메뉴정보	*/
 app.put('/menu/:id', function(req,res){
@@ -330,7 +375,7 @@ app.delete('/menu/:id', function(req,res){
 });
 
 /*	19	점포조회	GET	/user/biz	business_number	SELECT	CUS	영업장정보	*/
-app.get('/user/biz', function(req,res){
+app.get('/users/biz', function(req,res){
 	connection.query('select * from business_info', 
 		function(err, results, fields) {
 			if (err) {
@@ -347,7 +392,7 @@ app.get('/user/biz', function(req,res){
 });
 
 /*	19	점포상세조회	GET	/user/biz	business_number	SELECT	CUS	영업장정보	*/
-app.get('/user/biz/:id', function(req,res){
+app.get('/users/biz/:id', function(req,res){
 	connection.query('select * from business_info where id=?',
 		[req.params.id], function(err, results, fields) {
 			if (err) {
@@ -363,7 +408,7 @@ app.get('/user/biz/:id', function(req,res){
 		});
 });
 
-/*	13	점포등록	POST	/user/biz	business_number, name, context	INSERT	BIZ	영업장정보	*/
+/*	13	점포등록	POST	/user/biz	businessid, name, context	INSERT	BIZ	영업장정보	*/
 app.post('/users/biz', function(req,res){
 	connection.query(
 		'insert into business_info(businessid,name,context,gps,business_state) values(?,?,?,?,?)',

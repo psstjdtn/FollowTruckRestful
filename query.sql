@@ -17,6 +17,14 @@ age integer
 
 
 -- followtruck
+create table user_login(
+id integer primary key auto_increment,
+user_real_id integer,
+token text,
+created_at DATETIME default current_timestamp
+);
+
+
 create table users(
 id integer auto_increment PRIMARY KEY,
 userid VARCHAR(20) UNIQUE NOT NULL,

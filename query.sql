@@ -58,7 +58,8 @@ id integer auto_increment PRIMARY KEY,
 businessid VARCHAR(20) UNIQUE NOT NULL,
 name text NOT NULL,
 context text,
-gps text,
+latitude double,
+longitude double,
 business_state integer NOT NULL
 );
 

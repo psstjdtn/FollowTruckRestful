@@ -12,8 +12,8 @@ var mysql = require('mysql');
 var connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
-  password : 'test1234',
-  port     : '3307',
+  //password : 'test1234',
+  //port     : '3307',
   database : 'restful'
 }); 
 connection.connect();
@@ -251,7 +251,7 @@ app.delete('/board/:id', function(req,res){
 });
 
 /*	9	메뉴조회	GET	/menu/list	businessid	SELECT	BIZ	메뉴정보	*/
-app.get('/menu/', function(req,res){
+app.get('/menu', function(req,res){
 	connection.query('select * from menu',
 		[req.params.businessid], function(err, results, fields) {
 			if (err) {
@@ -374,27 +374,22 @@ app.delete('/menu/:id', function(req,res){
 		});
 });
 
-/*	19	점포조회	GET	/user/biz	business_number	SELECT	CUS	영업장정보	*/
-app.get('/users/biz', function(req,res){
+/*	19	점포조회	GET	/user/biz/all	business_number	SELECT	CUS	영업장정보	*/
+app.get('/biz/', function(req,res){
 	connection.query('select * from business_info', 
-		function(err, results, fields) {
+		function(err,results,fields) {
 			if (err) {
 				res.send(JSON.stringify(err));
 			} else {
-				if (results.length > 0) {
-					res.send(JSON.stringify(results));
-				} else {
-					res.send(JSON.stringify({}));
-				}
-				
+				res.send(JSON.stringify(results));
 			}
 		});
 });
 
 /*	19	점포상세조회	GET	/user/biz	business_number	SELECT	CUS	영업장정보	*/
-app.get('/users/biz/:id', function(req,res){
-	connection.query('select * from business_info where id=?',
-		[req.params.id], function(err, results, fields) {
+app.get('/biz/:businessid', function(req,res){
+	connection.query('select * from business_info where businessid=?',
+		[req.params.businessid], function(err, results, fields) {
 			if (err) {
 				res.send(JSON.stringify(err));
 			} else {
@@ -409,10 +404,10 @@ app.get('/users/biz/:id', function(req,res){
 });
 
 /*	13	점포등록	POST	/user/biz	businessid, name, context	INSERT	BIZ	영업장정보	*/
-app.post('/users/biz', function(req,res){
+app.post('/biz', function(req,res){
 	connection.query(
-		'insert into business_info(businessid,name,context,gps,business_state) values(?,?,?,?,?)',
-		[ req.body.businessid, req.body.name, req.body.context, req.body.gps, 2], 
+		'insert into business_info(businessid,name,context,latitude,longitude,business_state) values(?,?,?,?,?,?)',
+		[ req.body.businessid, req.body.name, req.body.context, 0, 0, 2], 
 		function(err, result) {
 			if (err) {
 				res.send(JSON.stringify(err));
@@ -423,7 +418,7 @@ app.post('/users/biz', function(req,res){
 });
 
 /*	14	점포삭제	DELETE	/user/biz	business_number	DELETE	BIZ	영업장정보	*/
-app.delete('/user/biz', function(req,res){
+app.delete('/biz', function(req,res){
 	connection.query('delete from business_info where id=?',
 		[ req.params.id ], function(err, result) {
 			if (err) {
@@ -435,16 +430,16 @@ app.delete('/user/biz', function(req,res){
 });
 
 /*	15	점포정보변경(영업시작종료 등)	PUT	/user/biz/	business_number, gps 	UPDATE	BIZ	영업장정보	*/
-app.put('/user/biz/:id', function(req,res){
+app.put('/biz/:id', function(req,res){
 	connection.query(
-		'update business_info set businessid=?,name=?,context=?,gps=?,business_state=? where id=?',
-		[ req.body.businessid, req.body.name, req.body.context, req.body.gps, req.body.business_state,
+		'update business_info set businessid=?,name=?,context=?,latitude=?,longitude=?,business_state=? where id=?',
+		[ req.body.businessid, req.body.name, req.body.context, req.body.latitude, req.body.longitude, req.body.business_state,
 		  req.params.id ],
-		function(err, result) {
+		function(err, results) {
 			if (err) {
 				res.send(JSON.stringify(err));
 			} else {
-				res.send(JSON.stringify(result));
+				res.send({result:true});
 			}
 		});
 });

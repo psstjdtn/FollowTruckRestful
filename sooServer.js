@@ -376,7 +376,7 @@ app.delete('/menu/:id', function(req,res){
 
 /*	19	점포조회	GET	/user/biz/all	business_number	SELECT	CUS	영업장정보	*/
 app.get('/biz/', function(req,res){
-	connection.query('select * from business_info', 
+	connection.query('select * from business_info where business_state != 2', 
 		function(err,results,fields) {
 			if (err) {
 				res.send(JSON.stringify(err));

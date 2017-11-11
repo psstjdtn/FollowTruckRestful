@@ -444,6 +444,38 @@ app.put('/biz/:id', function(req,res){
 		});
 });
 
+/*	종합조회 join	*/
+app.get('/bizs/:businessid', function(req,res){
+	connection.query('select * from users a, business_info b where a.userid = b.businessid and businessid=?',
+		[req.params.businessid], function(err, results, fields) {
+			if (err) {
+				res.send(JSON.stringify(err));
+			} else {
+				if (results.length > 0) {
+					res.send(JSON.stringify(results[0]));
+				} else {
+					res.send(JSON.stringify({}));
+				}
+				
+			}
+		});
+});
+
+/*	15	점포정보변경(영업시작종료 등)	PUT	/user/biz/	business_number, gps 	UPDATE	BIZ	영업장정보	*/
+app.put('/bizs/:businessid', function(req,res){
+	connection.query(
+		'update users a, business_info b set b.name=?,a.name=?,b.context=?,a.hpno=?,a.snsid=?,b.business_state=? where a.userid = b.businessid and businessid=?',
+		[ req.body.name, req.body.name, req.body.context, req.body.hpno, req.body.snsid, req.body.business_state,
+		  req.params.businessid ],
+		function(err, results) {
+			if (err) {
+				res.send(JSON.stringify(err));
+			} else {
+				res.send({result:true});
+			}
+		});
+});
+
 /*	16	주문상세조회	GET	/order/biz/list	business_number, date	SELECT	BIZ	주문내역	*/
 app.get('/order/:id', function(req,res){
 	connection.query('select * from order_info where id=?',
